@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import java.util.List;
 
 import static com.intellij.psi.JavaPsiFacade.getElementFactory;
+import static java.util.Arrays.asList;
 
 public class BuilderGenerator {
 
@@ -35,14 +36,50 @@ public class BuilderGenerator {
         createBuilderFactoryMethod();
     }
 
+    private void createBuilderClass() {
+        PsiClass builderClass = getBuilderClass();
+        if(builderClass == null){
+            builderClass = elementFactory.createClass("Builder");
+            builderClass.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+            builderClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+            PsiMethod constructor = elementFactory.createConstructor();
+            constructor.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+            builderClass.add(constructor);
+            builderClass.add(createBuildMethod());
+        }
+        for (PsiField field : fieldsToGenerate) {
+            builderClass.add(createBuilderField(field));
+            builderClass.add(createBuilderMethod(field));
+        }
+        if(getBuilderClass() == null){
+            ownerClass.add(builderClass);
+        }
+    }
+
     private void createPrivateConstructorWithBuilder() {
         StringBuilder methodText = new StringBuilder("private ").append(ownerClass.getName()).append("(Builder builder){\n");
-        for (PsiField field : fieldsToGenerate) {
+        for (PsiField field : getFieldsForOwnerConstructor()) {
             methodText.append("this.").append(field.getName()).append(" = ").append("builder.").append(field.getName()).append(";\n");
         }
         methodText.append("}");
         PsiMethod method = createMethod(methodText);
+        PsiMethod[] constructors = ownerClass.getConstructors();
+        for (PsiMethod constructor : constructors) {
+            PsiParameter[] parameters = constructor.getParameterList().getParameters();
+            boolean isBuilderParameter = parameters.length == 1 && parameters[0].getType().getPresentableText().equals("Builder");
+            if(isBuilderParameter){
+                constructor.delete();
+            }
+        }
         ownerClass.add(method);
+    }
+
+    private List<PsiField> getFieldsForOwnerConstructor() {
+        PsiClass builderClass = getBuilderClass();
+        if(builderClass == null){
+            return fieldsToGenerate;
+        }
+        return asList(builderClass.getFields());
     }
 
     private void createBuilderFactoryMethod() {
@@ -50,25 +87,12 @@ public class BuilderGenerator {
                 .append("return new Builder();\n")
                 .append("}");
         PsiMethod method = createMethod(methodText);
-        ownerClass.add(method);
-    }
-
-    private void createBuilderClass() {
-        PsiClass builderClass = elementFactory.createClass("Builder");
-        builderClass.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-        builderClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
-        PsiMethod constructor = elementFactory.createConstructor();
-        constructor.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
-        builderClass.add(constructor);
-        for (PsiField field : fieldsToGenerate) {
-            builderClass.add(createBuilderField(field));
-            builderClass.add(createBuilderMethod(field));
+        if(ownerClass.findMethodBySignature(method, true) == null){
+            ownerClass.add(method);
         }
-        builderClass.add(createBuildMethod());
-        ownerClass.add(builderClass);
     }
 
-    private PsiElement createBuildMethod() {
+    private PsiMethod createBuildMethod() {
         StringBuilder methodText = new StringBuilder("public ").append(ownerClass.getName()).append(" build(){\n")
                 .append("return new ").append(ownerClass.getName()).append("(this);\n")
                 .append("}");
@@ -90,8 +114,11 @@ public class BuilderGenerator {
         return createMethod(methodText);
     }
 
+    private PsiClass getBuilderClass() {
+        return ownerClass.findInnerClassByName("Builder", true);
+    }
+
     private PsiMethod createMethod(StringBuilder methodText) {
         return elementFactory.createMethodFromText(methodText.toString(), null);
     }
-
 }

@@ -45,14 +45,13 @@ public class BuilderDialog extends DialogWrapper {
         if(builderClass != null){
             return additionalFields(ownerClass, builderClass);
         }
-        return ownerClass.getAllFields();
+        return ownerClass.getFields();
     }
 
     private PsiField[] additionalFields(PsiClass ownerClass, PsiClass builderClass) {
         ArrayList<PsiField> additionalFields = new ArrayList<PsiField>();
         for (PsiField psiField : ownerClass.getFields()) {
-            PsiField field = builderClass.findFieldByName(psiField.getName(), true);
-            if(field == null){
+            if(builderClass.findFieldByName(psiField.getName(), true) == null){
                 additionalFields.add(psiField);
             }
         }
