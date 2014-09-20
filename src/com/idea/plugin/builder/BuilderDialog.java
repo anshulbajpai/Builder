@@ -21,13 +21,15 @@ public class BuilderDialog extends DialogWrapper {
 
     private final LabeledComponent<JPanel> component;
     private final JList fieldList;
+    private final PsiClass ownerClass;
 
-    public BuilderDialog(PsiClass psiClass) {
-        super(psiClass.getProject());
+    public BuilderDialog(PsiClass ownerClass) {
+        super(ownerClass.getProject());
+        this.ownerClass = ownerClass;
 
         setTitle("Select Fields for Builder");
 
-        CollectionListModel<PsiField> fields = new CollectionListModel<PsiField>(getFieldsToAdd(psiClass));
+        CollectionListModel<PsiField> fields = new CollectionListModel<PsiField>(getFieldsToAdd());
         fieldList = new JBList(fields);
         fieldList.setCellRenderer(new DefaultPsiElementCellRenderer());
         ToolbarDecorator decorator = createDecorator(fieldList);
@@ -40,15 +42,15 @@ public class BuilderDialog extends DialogWrapper {
         init();
     }
 
-    private PsiField[] getFieldsToAdd(PsiClass ownerClass) {
+    private PsiField[] getFieldsToAdd() {
         PsiClass builderClass = ownerClass.findInnerClassByName("Builder", true);
         if(builderClass != null){
-            return additionalFields(ownerClass, builderClass);
+            return additionalFields(builderClass);
         }
         return ownerClass.getFields();
     }
 
-    private PsiField[] additionalFields(PsiClass ownerClass, PsiClass builderClass) {
+    private PsiField[] additionalFields(PsiClass builderClass) {
         ArrayList<PsiField> additionalFields = new ArrayList<PsiField>();
         for (PsiField psiField : ownerClass.getFields()) {
             if(builderClass.findFieldByName(psiField.getName(), true) == null){
