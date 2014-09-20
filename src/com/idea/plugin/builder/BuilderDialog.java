@@ -40,34 +40,23 @@ public class BuilderDialog extends DialogWrapper {
         init();
     }
 
-    private PsiField[] getFieldsToAdd(PsiClass psiClass) {
-        PsiField[] allFields = psiClass.getAllFields();
-        PsiClass[] innerClasses = psiClass.getAllInnerClasses();
-        for (PsiClass innerClass : innerClasses) {
-            if(innerClass.getName().equals("Builder")){
-                return additionalFields(allFields, innerClass.getAllFields());
-            }
+    private PsiField[] getFieldsToAdd(PsiClass ownerClass) {
+        PsiClass builderClass = ownerClass.findInnerClassByName("Builder", true);
+        if(builderClass != null){
+            return additionalFields(ownerClass, builderClass);
         }
-        return allFields;
+        return ownerClass.getAllFields();
     }
 
-    private PsiField[] additionalFields(PsiField[] allFields, PsiField[] existingFields) {
+    private PsiField[] additionalFields(PsiClass ownerClass, PsiClass builderClass) {
         ArrayList<PsiField> additionalFields = new ArrayList<PsiField>();
-        for (PsiField psiField : allFields) {
-            if(isANonExistingField(psiField, existingFields)){
+        for (PsiField psiField : ownerClass.getFields()) {
+            PsiField field = builderClass.findFieldByName(psiField.getName(), true);
+            if(field == null){
                 additionalFields.add(psiField);
             }
         }
         return additionalFields.toArray(new PsiField[]{});
-    }
-
-    private boolean isANonExistingField(PsiField psiField, PsiField[] existingFields) {
-        for (PsiField existingField : existingFields) {
-            if(existingField.getName().equals(psiField.getName())){
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override
