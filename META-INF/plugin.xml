@@ -2,18 +2,12 @@
   <id>com.idea.plugin.builder</id>
   <name>Builder</name>
   <version>1.0</version>
-  <vendor email="bajpai.anshul@gmail.com" url="http://www.yourcompany.com">YourCompany</vendor>
+  <vendor email="bajpai.anshul@gmail.com" url="http://github.com/anshulbajpai">Anshul Bajpai</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <em>most HTML tags may be used</em>
+     Intellij Idea plugin to generate Java Builder for a class.<br>
+     Alt + Insert -> Generate Builder...
     ]]></description>
-
-  <change-notes><![CDATA[
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>
-    ]]>
-  </change-notes>
 
   <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
   <idea-version since-build="131"/>
@@ -38,7 +32,7 @@
 
   <actions>
     <!-- Add your actions here -->
-      <action id="builder-action" class="com.idea.plugin.builder.BuilderAction" text="Create Builder..."
+      <action id="builder-action" class="com.idea.plugin.builder.BuilderAction" text="Generate Builder..."
               description="Generate builder for a class">
           <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
